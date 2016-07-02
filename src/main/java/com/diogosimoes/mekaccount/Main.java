@@ -17,7 +17,6 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
@@ -31,6 +30,7 @@ public class Main {
     	init();
         get("/", (req, res) -> {
             return serialize(Model.dump().collect(Collectors.toSet()));
+        	//return Model.dump().map(o -> o.getOid()).collect(Collectors.joining("\n")) + "\n";
         });
         
         get("/account/:oid", (req, res) -> {
@@ -44,19 +44,20 @@ public class Main {
         	if (account == null) {
         		halt(403, "Invalid request!\n");
         	}
-        	return account.getOid() + "\n" + account.getName() + "\n" + account.getEmail() + "\n" + account.getPhone() + "\n";
+        	//return account.getOid() + "\n" + account.getName() + "\n" + account.getEmail() + "\n" + account.getPhone() + "\n";
+        	return gson.toJson(account);
         });
     }
     
     protected static void init() {
-    	gsonBuilder.registerTypeAdapter(DomainObject.class, new JsonSerializer<DomainObject>() {
+    	gsonBuilder.registerTypeHierarchyAdapter(DomainObject.class, new JsonSerializer<DomainObject>() {
 			@Override
 			public JsonElement serialize(DomainObject src, Type typeOfSrc,
 					JsonSerializationContext context) {
 				return src.serialize();
 			}
 		});
-    	gsonBuilder.registerTypeAdapter(DomainObject.class, new JsonDeserializer<DomainObject>() {
+    	gsonBuilder.registerTypeHierarchyAdapter(DomainObject.class, new JsonDeserializer<DomainObject>() {
 			@Override
 			public DomainObject deserialize(JsonElement json, Type typeOfT,
 					JsonDeserializationContext context)
@@ -64,6 +65,7 @@ public class Main {
 				return Model.find(json.getAsJsonPrimitive().getAsString());
 			}
 		});
+    	gsonBuilder.setPrettyPrinting();
     	gson = gsonBuilder.create();
     	
     	final Account diogo = new Account("diogo@domain.tld", "diogo", "555-0123");
