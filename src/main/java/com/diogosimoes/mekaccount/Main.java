@@ -16,7 +16,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
@@ -24,6 +26,7 @@ public class Main {
 	
 	private static GsonBuilder gsonBuilder = new GsonBuilder();
 	private static Gson gson;
+	private static JsonParser parser = new JsonParser();
 	private static Object writeLock = new Object();
 
     public static void main(String[] args) {
@@ -43,6 +46,11 @@ public class Main {
         	if (account == null) {
         		halt(403, "Invalid request!\n");
         	}
+        	return gson.toJson(account);
+        });
+        
+        post("/account", (req, res) -> {
+        	final Account account = createAccount((JsonObject)parser.parse(req.body()));  
         	return gson.toJson(account);
         });
     }
@@ -102,5 +110,15 @@ public class Main {
     
     private static String serialize(Set<DomainObject> model) {
     	return gson.toJson(model) + "\n";
+    }
+    
+    private static Account createAccount(JsonObject accountConf) {
+    	synchronized (writeLock) {
+    		final Account account = new Account(accountConf.get("email").getAsString(),
+    				accountConf.get("name").getAsString(),
+    				accountConf.get("phone").getAsString());
+    		accountConf.get("aliases").getAsJsonArray().forEach(el -> account.addAlias(el.getAsString()));
+    		return account;
+		}
     }
 }

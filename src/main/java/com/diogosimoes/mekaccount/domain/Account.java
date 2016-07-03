@@ -61,6 +61,14 @@ public class Account extends DomainObject {
 		this.aliases = aliases;
 	}
 	
+	public void addAlias(String alias) {
+		aliases.add(alias);
+	}
+	
+	public void removeAlias(String alias) {
+		aliases.remove(alias);
+	}
+	
 	public Mekamon getMekamon() {
 		return mekamon;
 	}
