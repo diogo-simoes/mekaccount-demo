@@ -1,8 +1,11 @@
 package com.diogosimoes.mekaccount.domain;
 
+import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 public class Account extends DomainObject {
@@ -16,6 +19,7 @@ public class Account extends DomainObject {
 	
 	public Account() {
 		super();
+		aliases = new HashSet<String>();
 	}
 	
 	public Account(String email, String name, String phone) {
@@ -62,6 +66,9 @@ public class Account extends DomainObject {
 	}
 	
 	public void setMekamon(Mekamon mekamon) {
+		if (this.mekamon == mekamon) {
+			return;
+		}
 		if (this.mekamon != null) {
 			this.mekamon.$set$Account(null);
 		}
@@ -80,6 +87,20 @@ public class Account extends DomainObject {
 
 	@Override
 	public JsonElement serialize() {
-		return new JsonPrimitive(getOid());
+		final JsonObject account = new JsonObject();
+		account.add("oid", new JsonPrimitive(getOid()));
+		account.add("email", new JsonPrimitive(getEmail() != null ? getEmail() : ""));
+		account.add("name", new JsonPrimitive(getName() != null ? getName() : ""));
+		account.add("phone", new JsonPrimitive(getPhone() != null ? getPhone() : ""));
+		
+		final JsonArray aliases = new JsonArray();
+		account.add("aliases", aliases);
+		for (String alias : getAliases()) {
+			aliases.add(new JsonPrimitive(alias));
+		}
+		
+		account.add("mekamon", new JsonPrimitive(getMekamon() != null ? getMekamon().getOid() : ""));
+		
+		return account;
 	}
 }

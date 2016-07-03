@@ -3,7 +3,9 @@ package com.diogosimoes.mekaccount.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 public class Battle extends DomainObject {
@@ -36,6 +38,9 @@ public class Battle extends DomainObject {
 	}
 	
 	public void addMekamon(Mekamon mekamon) {
+		if (mekamons.contains(mekamon)) {
+			return;
+		}
 		mekamons.add(mekamon);
 		mekamon.$add$Battle(this);
 	}
@@ -45,6 +50,9 @@ public class Battle extends DomainObject {
 	}
 	
 	public void removeMekamon(Mekamon mekamon) {
+		if (!mekamons.contains(mekamon)) {
+			return;
+		}
 		mekamons.remove(mekamon);
 		mekamon.$remove$Battle(this);
 	}
@@ -55,6 +63,16 @@ public class Battle extends DomainObject {
 	
 	@Override
 	public JsonElement serialize() {
-		return new JsonPrimitive(getOid());
+		final JsonObject battle = new JsonObject();
+		battle.add("oid", new JsonPrimitive(getOid() != null ? getOid() : ""));
+		battle.add("battleId", new JsonPrimitive(getBattleId() != null ? getBattleId() : ""));
+		
+		final JsonArray mekamons = new JsonArray();
+		battle.add("mekamons", mekamons);
+		for (Mekamon mekamon : getMekamons()) {
+			mekamons.add(new JsonPrimitive(mekamon.getOid()));
+		}
+		
+		return battle;
 	}
 }

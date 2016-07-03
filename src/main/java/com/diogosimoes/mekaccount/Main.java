@@ -30,7 +30,6 @@ public class Main {
     	init();
         get("/", (req, res) -> {
             return serialize(Model.dump().collect(Collectors.toSet()));
-        	//return Model.dump().map(o -> o.getOid()).collect(Collectors.joining("\n")) + "\n";
         });
         
         get("/account/:oid", (req, res) -> {
@@ -44,7 +43,6 @@ public class Main {
         	if (account == null) {
         		halt(403, "Invalid request!\n");
         	}
-        	//return account.getOid() + "\n" + account.getName() + "\n" + account.getEmail() + "\n" + account.getPhone() + "\n";
         	return gson.toJson(account);
         });
     }
@@ -103,6 +101,6 @@ public class Main {
     }
     
     private static String serialize(Set<DomainObject> model) {
-    	return gson.toJson(model);
+    	return gson.toJson(model) + "\n";
     }
 }

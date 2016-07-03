@@ -3,7 +3,9 @@ package com.diogosimoes.mekaccount.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 public class Mekamon extends DomainObject {
@@ -17,6 +19,8 @@ public class Mekamon extends DomainObject {
 	
 	public Mekamon() {
 		super();
+		evoLvl = 1;
+		addons = new HashSet<String>();
 		battles = new HashSet<Battle>();
 	}
 	
@@ -50,6 +54,9 @@ public class Mekamon extends DomainObject {
 	}
 	
 	public void setAccount(Account account) {
+		if (this.account == account) {
+			return;
+		}
 		if (this.account != null) {
 			this.account.$set$Mekamon(null);
 		}
@@ -71,6 +78,9 @@ public class Mekamon extends DomainObject {
 	}
 	
 	public void addBattle(Battle battle) {
+		if (battles.contains(battle)) {
+			return;
+		}
 		battles.add(battle);
 		battle.$add$Mekamon(this);
 	}
@@ -80,6 +90,9 @@ public class Mekamon extends DomainObject {
 	}
 	
 	public void removeBattle(Battle battle) {
+		if (!battles.contains(battle)) {
+			return;
+		}
 		battles.remove(battle);
 		battle.$remove$Mekamon(this);
 	}
@@ -90,6 +103,25 @@ public class Mekamon extends DomainObject {
 	
 	@Override
 	public JsonElement serialize() {
-		return new JsonPrimitive(getOid());
+		final JsonObject mekamon = new JsonObject();
+		mekamon.add("oid", new JsonPrimitive(getOid()));
+		mekamon.add("mekaId", new JsonPrimitive(getMekaId() != null ? getMekaId() : ""));
+		mekamon.add("evoLvl", new JsonPrimitive(getEvoLvl()));
+		
+		final JsonArray addons = new JsonArray();
+		mekamon.add("addons", addons);
+		for (String addon : getAddons()) {
+			addons.add(new JsonPrimitive(addon));
+		}
+		
+		mekamon.add("account", new JsonPrimitive(getAccount() != null ? getAccount().getOid(): ""));
+		
+		final JsonArray battles = new JsonArray();
+		mekamon.add("battles", battles);
+		for (Battle battle : getBattles()) {
+			battles.add(new JsonPrimitive(battle.getOid()));
+		}
+		
+		return mekamon;
 	}
 }
