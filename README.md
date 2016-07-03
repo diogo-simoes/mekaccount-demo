@@ -17,9 +17,16 @@ Once this is done, simply type in
   docker run -d -p 4567:4567 diogosimoes/mekaccount
 ```
 
-And you will have a container running mekaccount.
+and you will have a container running mekaccount.
 
-To see if everything is fine, list all running containers `docker ps` and check if **diogosimoes/mekaccount** is listed.
+
+To see if everything is fine, list all running containers
+
+```
+  docker ps
+```
+
+and check if **diogosimoes/mekaccount** is listed.
 
 Now you can query the server. Try listing the whole model by typing
 
@@ -159,7 +166,7 @@ Now you can query the server. Try listing the whole model by typing
 
 ### API - Agnostic mode ###
 
-You don't have to specify an API version when formulating your request. If the version is omitted, the server will answer with the most recent version. For this to happen, however, make sure you tell cURL to answer redirects by using the flag **_-L-**, as in
+You don't have to specify an API version when formulating your request. If the version is omitted, the server will answer with the most recent version. For this to happen, however, make sure you tell cURL to answer redirects by using the flag **_-L-_**, as in
 ```
   curl -L localhost:4567
 ```
