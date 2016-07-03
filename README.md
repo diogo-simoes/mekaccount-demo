@@ -3,7 +3,7 @@
 ## Instalation ##
 
 The mekaccount back-end is fairly easy to deploy if you have docker installed.
-After checking out the project just open the terminal, go to the mekaccount directory and type
+After checking out the project, just open the terminal, go to the mekaccount directory and type
 
 ```
   docker build -t diogosimoes/mekaccount .
@@ -171,3 +171,9 @@ You don't have to specify an API version when formulating your request. If the v
   curl -L localhost:4567
 ```
 
+
+## Technical considerations ##
+
+Concurrency is dealt with in a very simple manner. Writing operations share a lock that gives them access to change the model state. Reading operations are allowed in at all times to avoid a higher overhead, with the trade-off being no guaranteed consistency on model views. In between writes though, the model is consistent. The only exception being if something goes wrong during a writing action. It basically lacks a rollback mechanism.
+
+In resume, writes are not ACID, lacking a rollback mechanism. That mechanism could help solve all the other concurrency issues identified, leading on to the implementation of a _Read-copy-update_. Nevertheless, developing a Transactional Engine would be a whole project on its own, which would have clearly exceeded the aim of this demo.
