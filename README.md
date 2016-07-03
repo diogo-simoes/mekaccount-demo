@@ -1,6 +1,6 @@
 # mekaccount-demo
 
-## Instalation ##
+## Installation ##
 
 The mekaccount back-end is fairly easy to deploy if you have docker installed.
 After checking out the project, just open the terminal, go to the mekaccount directory and type
@@ -9,7 +9,7 @@ After checking out the project, just open the terminal, go to the mekaccount dir
   docker build -t diogosimoes/mekaccount .
 ```
 
-This will create the docker image. The first time you run it, it will take a bit because maven will download all dependencies it needs and build the project.
+This will create the docker image. The first time you run it, it will take a bit because maven will download all the dependencies it needs and build the project.
 
 Once this is done, simply type in
 
@@ -166,7 +166,7 @@ Now you can query the server. Try listing the whole model by typing
 
 ### API - Agnostic mode ###
 
-You don't have to specify an API version when formulating your request. If the version is omitted, the server will answer with the most recent version. For this to happen, however, make sure you tell cURL to answer redirects by using the flag **_-L-_**, as in
+You don't have to specify an API version when formulating your request. If the version is omitted, the server will answer with the most recent version. For this to happen, however, make sure you tell cURL to answer redirects by using the flag **_-L_**, as in
 ```
   curl -L localhost:4567
 ```
