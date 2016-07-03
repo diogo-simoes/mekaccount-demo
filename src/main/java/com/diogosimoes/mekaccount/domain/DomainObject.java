@@ -19,5 +19,9 @@ public abstract class DomainObject {
 		return oid;
 	}
 	
+	public void delete() {
+		Model.remove(this);
+	}
+	
 	public abstract JsonElement serialize();
 }

@@ -28,30 +28,120 @@ public class Main {
 	private static Gson gson;
 	private static JsonParser parser = new JsonParser();
 	private static Object writeLock = new Object();
+	
+	protected static enum UpdateType {
+		ADD,
+		REMOVE
+	}
 
     public static void main(String[] args) {
     	init();
+    	
+    	/* Print all model*/
         get("/", (req, res) -> {
-            return serialize(Model.dump().collect(Collectors.toSet()));
+        	return gson.toJson(Model.dump()) + "\n";
         });
         
+        /* Account CRUDs*/
+        
         get("/account/:oid", (req, res) -> {
-        	Account account = null;
-        	String oid = req.params(":oid");
-        	try {
-        		account = Model.find(oid);
-        	} catch (NullPointerException | ClassCastException e) {
-        		halt(403, "Invalid request!\n");
-        	}
-        	if (account == null) {
-        		halt(403, "Invalid request!\n");
-        	}
-        	return gson.toJson(account);
+        	Account account = getAccount(req.params(":oid"));
+        	return gson.toJson(account) + "\n";
         });
         
         post("/account", (req, res) -> {
         	final Account account = createAccount((JsonObject)parser.parse(req.body()));  
-        	return gson.toJson(account);
+        	return gson.toJson(account) + "\n";
+        });
+        
+        put("/account/:oid", (req, res) -> {
+        	final Account account = getAccount(req.params(":oid"));
+        	updateAccount(account, (JsonObject)parser.parse(req.body()));
+        	return gson.toJson(account) + "\n";
+        });
+        
+        put("/account/:acc_oid/setmeka/:meka_oid", (req, res) -> {
+        	final Account account = getAccount(req.params(":acc_oid"));
+        	final Mekamon mekamon = getMekamon(req.params(":meka_oid"));
+        	updateAccount(account, mekamon);
+        	return gson.toJson(account) + "\n";
+        });
+        
+        put("/account/:acc_oid/setnomeka", (req, res) -> {
+        	final Account account = getAccount(req.params(":acc_oid"));
+        	updateAccount(account);
+        	return gson.toJson(account) + "\n";
+        });
+        
+        delete("/account/:oid", (req, res) -> {
+        	String oid = req.params(":oid");
+        	final Account account = getAccount(oid);
+        	account.delete();
+        	return String.format("Account #%s was deleted.\n", oid);
+        });
+        
+        /* Mekamon CRUDs*/
+        
+        get("/mekamon/:oid", (req, res) -> {
+        	Mekamon mekamon = getMekamon(req.params(":oid"));
+        	return gson.toJson(mekamon) + "\n";
+        });
+        
+        post("/mekamon", (req, res) -> {
+        	final Mekamon mekamon = createMekamon((JsonObject)parser.parse(req.body()));  
+        	return gson.toJson(mekamon) + "\n";
+        });
+        
+        put("/mekamon/:oid", (req, res) -> {
+        	final Mekamon mekamon = getMekamon(req.params(":oid"));
+        	updateMekamon(mekamon, (JsonObject)parser.parse(req.body()));
+        	return gson.toJson(mekamon) + "\n";
+        });
+        
+        delete("/mekamon/:oid", (req, res) -> {
+        	String oid = req.params(":oid");
+        	final Mekamon mekamon = getMekamon(oid);
+        	mekamon.delete();
+        	return String.format("Mekamon #%s was deleted.\n", oid);
+        });
+        
+        /* Battle CRUDs*/
+        
+        get("/battle/:oid", (req, res) -> {
+        	Battle battle = getBattle(req.params(":oid"));
+        	return gson.toJson(battle) + "\n";
+        });
+        
+        post("/battle", (req, res) -> {
+        	final Battle battle = createBattle((JsonObject)parser.parse(req.body()));  
+        	return gson.toJson(battle) + "\n";
+        });
+        
+        put("/battle/:oid", (req, res) -> {
+        	final Battle battle = getBattle(req.params(":oid"));
+        	updateBattle(battle, (JsonObject)parser.parse(req.body()));
+        	return gson.toJson(battle) + "\n";
+        });
+        
+        put("/battle/:battle_oid/add/:meka_oid", (req, res) -> {
+        	final Battle battle = getBattle(req.params(":battle_oid"));
+        	final Mekamon mekamon = getMekamon(req.params(":meka_oid"));
+        	updateBattle(battle, mekamon, UpdateType.ADD);
+        	return gson.toJson(battle) + "\n";
+        });
+        
+        put("/battle/:battle_oid/remove/:meka_oid", (req, res) -> {
+        	final Battle battle = getBattle(req.params(":battle_oid"));
+        	final Mekamon mekamon = getMekamon(req.params(":meka_oid"));
+        	updateBattle(battle, mekamon, UpdateType.REMOVE);
+        	return gson.toJson(mekamon) + "\n";
+        });
+        
+        delete("/battle/:oid", (req, res) -> {
+        	String oid = req.params(":oid");
+        	final Battle battle = getBattle(oid);
+        	battle.delete();
+        	return String.format("Battle #%s was deleted.\n", oid);
         });
     }
     
@@ -82,7 +172,7 @@ public class Main {
     	final Mekamon meka01 = new Mekamon("Mark01", 4);
     	jonathan.setMekamon(meka01);
     	
-    	new Battle(meka00, meka01);
+    	new Battle("battle#DIOJON", meka00, meka01);
     	
     	/*account = new Account();
     	account.setName("John Doe");
@@ -108,8 +198,17 @@ public class Main {
     	*/
     }
     
-    private static String serialize(Set<DomainObject> model) {
-    	return gson.toJson(model) + "\n";
+    private static Account getAccount(String oid) {
+    	Account account = null;
+    	try {
+    		account = Model.find(oid);
+    	} catch (NullPointerException | ClassCastException e) {
+    		halt(403, "Invalid request!\n");
+    	}
+    	if (account == null) {
+    		halt(403, "Invalid request!\n");
+    	}
+    	return account;
     }
     
     private static Account createAccount(JsonObject accountConf) {
@@ -119,6 +218,101 @@ public class Main {
     				accountConf.get("phone").getAsString());
     		accountConf.get("aliases").getAsJsonArray().forEach(el -> account.addAlias(el.getAsString()));
     		return account;
+		}
+    }
+    
+    private static Account updateAccount(Account account, JsonObject accountConf) {
+    	synchronized (writeLock) {
+    		account.setEmail(accountConf.get("email").getAsString());
+    		account.setName(accountConf.get("name").getAsString());
+    		account.setPhone(accountConf.get("phone").getAsString());
+    		account.clearAliases();
+    		accountConf.get("aliases").getAsJsonArray().forEach(el -> account.addAlias(el.getAsString()));
+    		return account;
+		}
+    }
+    
+    private static Account updateAccount(Account account, Mekamon mekamon) {
+    	synchronized (writeLock) {
+    		account.setMekamon(mekamon);
+    		return account;
+		}
+    }
+    
+    private static Account updateAccount(Account account) {
+    	synchronized (writeLock) {
+    		account.setMekamon(null);
+    		return account;
+		}
+    }
+    
+    private static Mekamon getMekamon(String oid) {
+    	Mekamon mekamon = null;
+    	try {
+    		mekamon = Model.find(oid);
+    	} catch (NullPointerException | ClassCastException e) {
+    		halt(403, "Invalid request!\n");
+    	}
+    	if (mekamon == null) {
+    		halt(403, "Invalid request!\n");
+    	}
+    	return mekamon;
+    }
+    
+    private static Mekamon createMekamon(JsonObject mekaConf) {
+    	synchronized (writeLock) {
+    		final Mekamon mekamon = new Mekamon(mekaConf.get("mekaId").getAsString(),
+    				mekaConf.get("evoLvl").getAsInt());
+    		return mekamon;
+		}
+    }
+    
+    private static Mekamon updateMekamon(Mekamon mekamon, JsonObject mekaConf) {
+    	synchronized (writeLock) {
+    		mekamon.setMekaId(mekaConf.get("mekaId").getAsString());
+    		mekamon.setEvoLvl(mekaConf.get("evoLvl").getAsInt());
+    		return mekamon;
+		}
+    }
+    
+    private static Battle getBattle(String oid) {
+    	Battle battle = null;
+    	try {
+    		battle = Model.find(oid);
+    	} catch (NullPointerException | ClassCastException e) {
+    		halt(403, "Invalid request!\n");
+    	}
+    	if (battle == null) {
+    		halt(403, "Invalid request!\n");
+    	}
+    	return battle;
+    }
+    
+    private static Battle createBattle(JsonObject battleConf) {
+    	synchronized (writeLock) {
+    		final Battle battle = new Battle(battleConf.get("battleId").getAsString());
+    		return battle;
+		}
+    }
+    
+    private static Battle updateBattle(Battle battle, JsonObject battleConf) {
+    	synchronized (writeLock) {
+    		battle.setBattleId(battleConf.get("battleId").getAsString());
+    		return battle;
+		}
+    }
+    
+    private static Battle updateBattle(Battle battle, Mekamon mekamon, UpdateType op) {
+    	synchronized (writeLock) {
+    		switch(op) {
+    		case ADD:
+    			battle.addMekamon(mekamon);
+    			break;
+    		case REMOVE:
+    			battle.removeMekamon(mekamon);
+    			break;
+    		}    		
+    		return battle;
 		}
     }
 }

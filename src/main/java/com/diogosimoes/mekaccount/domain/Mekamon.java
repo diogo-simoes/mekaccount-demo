@@ -45,8 +45,17 @@ public class Mekamon extends DomainObject {
 	public Set<String> getAddons() {
 		return addons;
 	}
-	public void setAddons(Set<String> addons) {
-		this.addons = addons;
+	
+	public void addAddon(String addon) {
+		addons.add(addon);
+	}
+	
+	public void removeAdoon(String addon) {
+		addons.remove(addon);
+	}
+	
+	public void clearAddons() {
+		addons.clear();
 	}
 	
 	public Account getAccount() {
@@ -54,21 +63,26 @@ public class Mekamon extends DomainObject {
 	}
 	
 	public void setAccount(Account account) {
-		if (this.account == account) {
+		final Account oldAcc = this.account;
+		final Account newAcc = account;
+		if (oldAcc == newAcc) {
 			return;
 		}
-		if (this.account != null) {
-			this.account.$set$Mekamon(null);
+		if (oldAcc != null) {
+			this.account = null;
+			oldAcc.$set$Mekamon(null);
 		}
-		this.account = account;
-		if (account != null) {
-			account.$set$Mekamon(this);
+		this.account = newAcc;
+		if (newAcc != null) {
+			newAcc.$set$Mekamon(this);
 		}
 	}
 	
 	void $set$Account(Account account) {
 		if (this.account != null) {
-			this.account.$set$Mekamon(null);
+			final Account oldAcc = this.account;
+			this.account = null;
+			oldAcc.$set$Mekamon(null);
 		}
 		this.account = account;
 	}
@@ -123,5 +137,14 @@ public class Mekamon extends DomainObject {
 		}
 		
 		return mekamon;
+	}
+	
+	@Override
+	public void delete() {
+		setAccount(null);
+		for (Battle battle : getBattles()) {
+			removeBattle(battle);
+		}
+		super.delete();
 	}
 }

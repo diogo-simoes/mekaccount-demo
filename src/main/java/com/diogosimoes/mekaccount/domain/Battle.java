@@ -19,8 +19,13 @@ public class Battle extends DomainObject {
 		mekamons = new HashSet<Mekamon>();
 	}
 	
-	public Battle(Mekamon red, Mekamon blue) {
+	public Battle(String battleId) {
 		this();
+		setBattleId(battleId);
+	}
+	
+	public Battle(String battleId, Mekamon red, Mekamon blue) {
+		this(battleId);
 		addMekamon(red);
 		addMekamon(blue);
 	}
@@ -74,5 +79,13 @@ public class Battle extends DomainObject {
 		}
 		
 		return battle;
+	}
+	
+	@Override
+	public void delete() {
+		for (Mekamon mekamon : getMekamons()) {
+			removeMekamon(mekamon);
+		}
+		super.delete();
 	}
 }

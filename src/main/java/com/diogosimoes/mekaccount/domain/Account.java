@@ -57,10 +57,6 @@ public class Account extends DomainObject {
 		return aliases;
 	}
 	
-	public void setAliases(Set<String> aliases) {
-		this.aliases = aliases;
-	}
-	
 	public void addAlias(String alias) {
 		aliases.add(alias);
 	}
@@ -69,26 +65,35 @@ public class Account extends DomainObject {
 		aliases.remove(alias);
 	}
 	
+	public void clearAliases() {
+		aliases.clear();
+	}
+	
 	public Mekamon getMekamon() {
 		return mekamon;
 	}
 	
 	public void setMekamon(Mekamon mekamon) {
-		if (this.mekamon == mekamon) {
+		final Mekamon oldMeka = this.mekamon;
+		final Mekamon newMeka = mekamon;
+		if (oldMeka == newMeka) {
 			return;
 		}
-		if (this.mekamon != null) {
-			this.mekamon.$set$Account(null);
+		if (oldMeka != null) {
+			this.mekamon = null;
+			oldMeka.$set$Account(null);
 		}
-		this.mekamon = mekamon;
-		if (mekamon != null) {
-			mekamon.$set$Account(this);
+		this.mekamon = newMeka;
+		if (newMeka != null) {
+			newMeka.$set$Account(this);
 		}
 	}
 	
 	void $set$Mekamon(Mekamon mekamon) {
 		if (this.mekamon != null) {
-			this.mekamon.$set$Account(null);
+			final Mekamon oldMeka = this.mekamon;
+			this.mekamon = null;
+			oldMeka.$set$Account(null);
 		}
 		this.mekamon = mekamon;
 	}
@@ -110,5 +115,11 @@ public class Account extends DomainObject {
 		account.add("mekamon", new JsonPrimitive(getMekamon() != null ? getMekamon().getOid() : ""));
 		
 		return account;
+	}
+
+	@Override
+	public void delete() {
+		setMekamon(null);
+		super.delete();
 	}
 }
