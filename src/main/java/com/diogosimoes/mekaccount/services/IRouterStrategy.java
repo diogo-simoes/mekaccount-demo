@@ -1,4 +1,4 @@
-package com.diogosimoes.mekaccount;
+package com.diogosimoes.mekaccount.services;
 
 public interface IRouterStrategy {
 	

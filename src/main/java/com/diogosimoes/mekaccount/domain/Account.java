@@ -1,7 +1,10 @@
 package com.diogosimoes.mekaccount.domain;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -121,5 +124,9 @@ public class Account extends DomainObject {
 	public void delete() {
 		setMekamon(null);
 		super.delete();
+	}
+	
+	public static Collection<Account> findAll() {
+		return Model.dump().stream().filter(o -> o instanceof Account).map(Account.class::cast).collect(Collectors.toSet());
 	}
 }

@@ -3,52 +3,49 @@ package com.diogosimoes.mekaccount;
 import static spark.Spark.*;
 
 import java.util.Comparator;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
+
+import spark.Request;
+import spark.Route;
 
 import com.diogosimoes.mekaccount.domain.Account;
 import com.diogosimoes.mekaccount.domain.Battle;
 import com.diogosimoes.mekaccount.domain.Mekamon;
+import com.diogosimoes.mekaccount.services.IRouterStrategy;
+import com.diogosimoes.mekaccount.services.MekaAPI_1_0;
+import com.diogosimoes.mekaccount.services.MekaAPI_2_0;
 
 public class Main {
-	/* Instanciated routers ordered from latest version to earliest */
+	
+	/* Instantiated routers ordered from latest version to earliest */
 	private static Set<IRouterStrategy> routers = new TreeSet<IRouterStrategy>(new Comparator<IRouterStrategy>() {
 		@Override
 		public int compare(IRouterStrategy r1, IRouterStrategy r2) {
 			return r2.getId().compareToIgnoreCase(r1.getId());
 		}
 	});
+	
+	private static Route defaultRoute = (req, res) -> {
+		filterRecurringRequest(req);
+    	String redirectUri = "/" + routers.iterator().next().getId();
+    	String uri = String.join("/", req.splat());
+    	if (uri != null && uri.length() > 0) {
+    		redirectUri += "/" + uri;
+    	}
+    	res.redirect(redirectUri, 308);
+    	return null;
+	};
 
     public static void main(String[] args) {
     	loadRouters();
     	loadInitialModel();
     	
     	/* Wildcards for all requests not specifying api version -> redirects to latest api version */
-        get("/*", (req, res) -> {
-        	String apiVersion = routers.iterator().next().getId();
-        	res.redirect("/" + apiVersion + "/" + String.join("/", req.splat()));
-        	return null;
-        });
-        
-        post("/*", (req, res) -> {
-        	String apiVersion = routers.iterator().next().getId();
-        	res.redirect("/" + apiVersion + "/" + String.join("/", req.splat()));
-        	return null;
-        });
-        
-        put("/*", (req, res) -> {
-        	String apiVersion = routers.iterator().next().getId();
-        	res.redirect("/" + apiVersion + "/" + String.join("/", req.splat()));
-        	return null;
-        });
-        
-        delete("/*", (req, res) -> {
-        	String apiVersion = routers.iterator().next().getId();
-        	res.redirect("/" + apiVersion + "/" + String.join("/", req.splat()));
-        	return null;
-        });    	
+        get("/*", defaultRoute);        
+        post("/*", defaultRoute);        
+        put("/*", defaultRoute);        
+        delete("/*", defaultRoute);    	
     }
     
     private static void loadInitialModel() {
@@ -64,10 +61,23 @@ public class Main {
     }
     
     private static void loadRouters() {
-    	MekaAPI_1_0 api = new MekaAPI_1_0();
+    	IRouterStrategy api = new MekaAPI_1_0();
+    	routers.add(api);
+    	api.publish();
+    	
+    	api = new MekaAPI_2_0();
     	routers.add(api);
     	api.publish();
     }
     
+    private static void filterRecurringRequest(Request req) {
+    	if (req.splat() == null || req.splat().length == 0) {
+    		return;
+    	}
+    	String[] path = req.splat()[0].split("/");
+    	if (path[0].equals(routers.iterator().next().getId())) {
+    		halt(403, "Invalid request!\n");
+    	}
+    }
     
 }

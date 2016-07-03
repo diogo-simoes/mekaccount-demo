@@ -1,4 +1,4 @@
-package com.diogosimoes.mekaccount;
+package com.diogosimoes.mekaccount.services;
 
 import static spark.Spark.delete;
 import static spark.Spark.get;
@@ -7,6 +7,9 @@ import static spark.Spark.post;
 import static spark.Spark.put;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import com.diogosimoes.mekaccount.domain.Account;
 import com.diogosimoes.mekaccount.domain.Battle;
@@ -65,20 +68,20 @@ public class MekaAPI_1_0 implements IRouterStrategy {
 	public void publish() {
 		/* Print all model*/
         get("/" + getId(), (req, res) -> {
-        	return gson.toJson(Model.dump()) + "\n";
+        	return response(Model.dump());
         });
         
         /* Account CRUDs*/
         
         get("/"+ getId() + "/account/:oid", (req, res) -> {
         	Account account = getAccount(req.params(":oid"));
-        	return gson.toJson(account) + "\n";
+        	return response(account);
         });
         
         post("/"+ getId() + "/account", (req, res) -> {
         	synchronized (writeLock) {
 	        	final Account account = createAccount((JsonObject)parser.parse(req.body()));  
-	        	return gson.toJson(account) + "\n";
+	        	return response(account);
         	}
         });
         
@@ -86,7 +89,7 @@ public class MekaAPI_1_0 implements IRouterStrategy {
         	synchronized (writeLock) {
 	        	final Account account = getAccount(req.params(":oid"));
 	        	updateAccount(account, (JsonObject)parser.parse(req.body()));
-	        	return gson.toJson(account) + "\n";
+	        	return response(account);
         	}
         });
         
@@ -95,7 +98,7 @@ public class MekaAPI_1_0 implements IRouterStrategy {
 	        	final Account account = getAccount(req.params(":acc_oid"));
 	        	final Mekamon mekamon = getMekamon(req.params(":meka_oid"));
 	        	updateAccount(account, mekamon);
-	        	return gson.toJson(account) + "\n";
+	        	return response(account);
         	}
         });
         
@@ -103,7 +106,7 @@ public class MekaAPI_1_0 implements IRouterStrategy {
         	synchronized (writeLock) {
 	        	final Account account = getAccount(req.params(":acc_oid"));
 	        	updateAccount(account);
-	        	return gson.toJson(account) + "\n";
+	        	return response(account);
         	}
         });
         
@@ -120,13 +123,13 @@ public class MekaAPI_1_0 implements IRouterStrategy {
         
         get("/"+ getId() + "/mekamon/:oid", (req, res) -> {
         	Mekamon mekamon = getMekamon(req.params(":oid"));
-        	return gson.toJson(mekamon) + "\n";
+        	return response(mekamon);
         });
         
         post("/"+ getId() + "/mekamon", (req, res) -> {
         	synchronized (writeLock) {
 	        	final Mekamon mekamon = createMekamon((JsonObject)parser.parse(req.body()));
-	        	return gson.toJson(mekamon) + "\n";
+	        	return response(mekamon);
         	}
         });
         
@@ -134,7 +137,7 @@ public class MekaAPI_1_0 implements IRouterStrategy {
         	synchronized (writeLock) {
 	        	final Mekamon mekamon = getMekamon(req.params(":oid"));
 	        	updateMekamon(mekamon, (JsonObject)parser.parse(req.body()));
-	        	return gson.toJson(mekamon) + "\n";
+	        	return response(mekamon);
         	}
         });
         
@@ -151,13 +154,13 @@ public class MekaAPI_1_0 implements IRouterStrategy {
         
         get("/"+ getId() + "/battle/:oid", (req, res) -> {
         	Battle battle = getBattle(req.params(":oid"));
-        	return gson.toJson(battle) + "\n";
+        	return response(battle);
         });
         
         post("/"+ getId() + "/battle", (req, res) -> {
         	synchronized (writeLock) {
 	        	final Battle battle = createBattle((JsonObject)parser.parse(req.body()));
-	        	return gson.toJson(battle) + "\n";
+	        	return response(battle);
         	}
         });
         
@@ -165,7 +168,7 @@ public class MekaAPI_1_0 implements IRouterStrategy {
         	synchronized (writeLock) {
 	        	final Battle battle = getBattle(req.params(":oid"));
 	        	updateBattle(battle, (JsonObject)parser.parse(req.body()));
-	        	return gson.toJson(battle) + "\n";
+	        	return response(battle);
         	}
         });
         
@@ -174,7 +177,7 @@ public class MekaAPI_1_0 implements IRouterStrategy {
 	        	final Battle battle = getBattle(req.params(":battle_oid"));
 	        	final Mekamon mekamon = getMekamon(req.params(":meka_oid"));
 	        	updateBattle(battle, mekamon, UpdateType.ADD);
-	        	return gson.toJson(battle) + "\n";
+	        	return response(battle);
         	}
         });
         
@@ -183,7 +186,7 @@ public class MekaAPI_1_0 implements IRouterStrategy {
 	        	final Battle battle = getBattle(req.params(":battle_oid"));
 	        	final Mekamon mekamon = getMekamon(req.params(":meka_oid"));
 	        	updateBattle(battle, mekamon, UpdateType.REMOVE);
-	        	return gson.toJson(mekamon) + "\n";
+	        	return response(battle);
         	}
         });
         
@@ -195,6 +198,17 @@ public class MekaAPI_1_0 implements IRouterStrategy {
 	        	return String.format("Battle #%s was deleted.\n", oid);
         	}
         });
+	}
+	
+	protected String response(Collection<DomainObject> model) {
+		final ResponseBean bean = new ResponseBean(getId(), model);
+		return gson.toJson(bean) + "\n";
+	}
+	
+	protected String response(DomainObject entity) {
+		final List<DomainObject> model = new ArrayList<DomainObject>();
+		model.add(entity);
+		return response(model);
 	}
 	
 	private static Account getAccount(String oid) {
